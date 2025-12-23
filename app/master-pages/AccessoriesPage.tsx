@@ -34,19 +34,21 @@ export default function AccessoriesPage() {
   const [loading, setLoading] = useState(true)
 
 
+    const fetchData = () => {
+      setLoading(true)
 
+      api
+        .get('/generic-masters', {
+          params: {
+            module_id: GenericMasterModuleType.Accessories,
+          },
+        })
+        .then(res => {
+          setData(res.data)
+        })
+          setLoading(false)
+    }
 
-  const fetchData = () => {
-    setLoading(true)
-    api.get('/generic-masters').then(res => {
-      const accessoriesData = res.data.filter(
-        (item: GenericMaster) =>
-          item.module_id === GenericMasterModuleType.Accessories
-      )
-      setData(accessoriesData)
-      setLoading(false)
-    })
-  }
 
   useEffect(() => {
     fetchData()
