@@ -40,7 +40,7 @@ export default function AccessoriesPage() {
       api
         .get('/generic-masters', {
           params: {
-            module_id: GenericMasterModuleType.Accessories,
+            'filter[0]': `module_id||$eq||${GenericMasterModuleType.Accessories}`,
           },
         })
         .then(res => {
