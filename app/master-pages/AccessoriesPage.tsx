@@ -1,0 +1,170 @@
+'use client'
+
+import { useEffect, useState } from 'react'
+import api from '@/utils/api'
+import { GenericMaster } from '@/types/GenericMaster'
+import { GenericMasterModuleType } from '@/constants/GenericMasterModuleType'
+
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table'
+
+import { Switch } from '@/components/ui/switch'
+import { Pencil, Trash2, Loader2} from 'lucide-react'
+import Loader from '@/components/ui/Loader'
+import { Button } from '@/components/ui/button'
+import AddEditAccessoryDialog from '../dilogboxes/AddEditAccessories'
+import DeleteConfirmDialog from '../dilogboxes/DeleteDialog'
+import StatusDialog from '../dilogboxes/StatusDialog'
+
+export default function AccessoriesPage() {
+  const [data, setData] = useState<GenericMaster[]>([])
+  const [open, setOpen] = useState(false)
+  const [editItem, setEditItem] = useState<GenericMaster | null>(null)
+  const [deleteOpen, setDeleteOpen] = useState(false)
+  const [deleteId, setDeleteId] = useState<number | null>(null)
+  const [statusDialogOpen, setStatusDialogOpen] = useState(false)
+  const [selectedItem, setSelectedItem] = useState<GenericMaster | null>(null)
+  const [tempStatus, setTempStatus] = useState<number>(0)
+  const [loading, setLoading] = useState(true)
+
+
+
+
+  const fetchData = () => {
+    setLoading(true)
+    api.get('/generic-masters').then(res => {
+      const accessoriesData = res.data.filter(
+        (item: GenericMaster) =>
+          item.module_id === GenericMasterModuleType.Accessories
+      )
+      setData(accessoriesData)
+      setLoading(false)
+    })
+  }
+
+  useEffect(() => {
+    fetchData()
+  }, [])
+
+  const rollbackStatus = () => {
+  if (!selectedItem) return
+
+  setData(prev =>
+    prev.map(d =>
+      d.master_id === selectedItem.master_id
+        ? { ...d, status: selectedItem.status }
+        : d
+    )
+  )
+}
+  const handleStatusClick = (item: GenericMaster) => {
+    setSelectedItem(item)
+
+    const toggledStatus = item.status === 1 ? 0 : 1
+    setTempStatus(toggledStatus)
+
+    
+    setData(prev =>
+      prev.map(d =>
+        d.master_id === item.master_id
+          ? { ...d, status: toggledStatus }
+          : d
+      )
+    )
+
+    setStatusDialogOpen(true)
+  }
+
+
+  return (
+    <div className="p-9">
+      <h1 className="text-2xl font-bold mb-4">Accessories</h1>
+
+      {loading ? <Loader/> : (
+      <Table>
+        <TableHeader className='bg-gray-100'>
+          <TableRow>
+            <TableHead>Name</TableHead>
+            <TableHead>Description</TableHead>
+            <TableHead>Status</TableHead>
+            <TableHead ></TableHead>
+          </TableRow>
+        </TableHeader>
+      
+        <TableBody> 
+          {data.map(item => (
+            <TableRow key={item.master_id}>
+              <TableCell>{item.name}</TableCell>
+
+              <TableCell>
+                {item.description ?? '-'}
+              </TableCell>
+
+              <TableCell >
+                <Switch  checked={item.status === 1}
+                onCheckedChange={() => handleStatusClick(item)} />
+                <span className="text-sm font-medium">
+                {item.status === 1 ? 'Active' : 'Inactive'}
+              </span>
+              </TableCell>
+
+              <TableCell className="flex justify-end gap-4">
+                <Pencil className="w-4 h-4 cursor-pointer"
+                onClick={() => {
+                    setEditItem(item)
+                    setOpen(true)
+                  }}
+                />
+                <Trash2 className="w-4 h-4 cursor-pointer text-red-500" 
+                 onClick={() => {
+                    setDeleteId(item.master_id)
+                    setDeleteOpen(true)
+                }}/>
+              </TableCell>
+            </TableRow>
+          ))}
+          
+        </TableBody>
+        
+      </Table>
+      )}
+      <div className='mt-70 flex justify-end'>
+        <Button className='bg-blue-900 flex justify-end' onClick={() => {
+            setEditItem(null)
+            setOpen(true)
+          }} >+ Add Accessories</Button>
+      </div>
+
+      <StatusDialog
+        open={statusDialogOpen}
+        setOpen={setStatusDialogOpen}
+        item={selectedItem}
+        newStatus={tempStatus}
+        onCancel={rollbackStatus}
+        refresh={fetchData}
+      />
+
+      
+      <AddEditAccessoryDialog
+        open={open}
+        setOpen={setOpen}
+        editItem={editItem}
+        refresh={fetchData}
+      />
+
+      <DeleteConfirmDialog
+        open={deleteOpen}
+        setOpen={setDeleteOpen}
+        id={deleteId}
+        refresh={fetchData}
+      />
+    </div>
+
+  )
+}
