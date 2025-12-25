@@ -10,6 +10,8 @@ import {
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { useState } from 'react'
+import { toast } from 'react-toastify'
+
 
 type Props = {
   open: boolean
@@ -28,16 +30,23 @@ export default function DeleteConfirmDialog({
 const [loading, setLoading] = useState(false)
 
   const handleDelete = async () => {
-    if (!id) return
+  if (!id) return
 
+  try {
     setLoading(true)
-
     await api.delete(`/generic-masters/${id}`)
-
+    toast.success('Record Deleted successfully')
     setOpen(false)
     refresh()
+  } catch (err: any) {
+    toast.error(
+      err.response?.data?.message || 'Delete failed'
+    )
+  } finally {
     setLoading(false)
   }
+}
+
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
