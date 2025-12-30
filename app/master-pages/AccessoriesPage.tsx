@@ -39,7 +39,9 @@ export default function AccessoriesPage() {
   const [tempStatus, setTempStatus] = useState<number>(0)
   const [loading, setLoading] = useState(true)
 
-
+  const [page, setPage] = useState(1)
+  const limit = 4
+  const [totalPages, setTotalPages] = useState(1)
     
    const fetchData = async () => {
     try {
@@ -47,11 +49,14 @@ export default function AccessoriesPage() {
 
       const res = await api.get('/generic-masters', {
         params: {
+          limit,
+          page,
+          'sort[0]': 'name,ASC',
           'filter[0]': `module_id||$eq||${GenericMasterModuleType.Accessories}`,
         },
       })
-
-      setData(res.data)
+      setData(res.data.data)
+      setTotalPages(res.data.meta?.totalPages ?? 1)
     } catch (err) {
       console.error(err)
     } finally {
@@ -59,9 +64,11 @@ export default function AccessoriesPage() {
     }
   }
 
-  useEffect(() => {
-    fetchData()
-  }, [])
+    useEffect(() => {
+      fetchData()
+    }, [page])
+
+
 
   const rollbackStatus = () => {
   if (!selectedItem) return
@@ -87,7 +94,6 @@ export default function AccessoriesPage() {
           : d
       )
     )
-
     setStatusDialogOpen(true)
   }
 
@@ -148,6 +154,29 @@ export default function AccessoriesPage() {
         </TableBody>
       </Table>
      
+       <div className="flex justify-center gap-3 mt-9 p-6">
+          <Button
+            variant="outline"        
+            onClick={() => setPage(p => Math.max(1, p - 1))}
+            disabled={page === totalPages}
+          >
+            Previous
+          </Button>
+
+          <span className="text-sm mt-2">
+            Page {page} of {totalPages}
+          </span>
+
+          <Button
+            variant="outline"
+              onClick={() => {
+                setPage(p => p + 1)             
+            }}
+          >
+            Next
+          </Button>
+        </div>
+
 
       <div className='mt-70 flex justify-end '>
         <Button className='bg-blue-900 flex justify-end  ' onClick={() => {
